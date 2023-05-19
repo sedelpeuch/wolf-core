@@ -28,12 +28,11 @@ class Application(ABC):
     :see: :class:`schedule.Job`
     :type _frequency: schedule.Job
     """
-    instances = []
 
     def __init__(self):
         self._apis: List[api.API] = []
-        self._frequency: schedule.Job = schedule.every(1).day
-        self.instances.append(self)
+        self.frequency: schedule.Job = schedule.every(1).day
+        self.logger = None
 
     @abstractmethod
     def job(self):
