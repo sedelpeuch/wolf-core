@@ -6,6 +6,11 @@ Wolf Core
    :alt: wolf
    :width: 50%
 
+.. raw:: html
+
+   <p>
+   </p>
+
 .. automodule:: runner
    :members:
    :undoc-members:
