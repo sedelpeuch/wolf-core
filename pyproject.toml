@@ -1,0 +1,10 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wolf_core"
+version = "0.1"
+
+[packages]
+wolf_core = { path = "core" }

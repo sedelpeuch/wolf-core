@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from typing import List
 
 import schedule
-from core import api
+from wolf_core import api
 
 
 class Application(ABC):
@@ -28,10 +28,12 @@ class Application(ABC):
     :see: :class:`schedule.Job`
     :type _frequency: schedule.Job
     """
+    instances = []
 
     def __init__(self):
         self._apis: List[api.API] = []
         self._frequency: schedule.Job = schedule.every(1).day
+        self.instances.append(self)
 
     @abstractmethod
     def job(self):
