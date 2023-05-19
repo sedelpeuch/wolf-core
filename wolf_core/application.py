@@ -5,10 +5,29 @@ runner.
 """
 
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import List
 
 import schedule
+
 from wolf_core import api
+
+
+class Status(Enum):
+    """
+    This class is an enum for the status of an application.
+    """
+    WAITING = 2
+    RUNNING = 1
+    ERROR = 3
+    SUCCESS = 4
+
+    def __str__(self):
+        """
+        This method returns the name of the status.
+        :return: The name of the status.
+        """
+        return self.name
 
 
 class Application(ABC):
@@ -33,10 +52,36 @@ class Application(ABC):
         self._apis: List[api.API] = []
         self.frequency: schedule.Job = schedule.every(1).day
         self.logger = None
+        self._status = Status.WAITING
+
+    @property
+    def status(self) -> Status:
+        """
+        This property returns the status of the application.
+        """
+        return self._status
+
+    @status.setter
+    def status(self, value: Status):
+        """
+        This property sets the status of the application.
+        """
+        if not isinstance(value, Status):
+            raise TypeError("The status must be a Status.")
+        self._status = value
+
+    def run(self):
+        """
+        This method is called by the runner. It loads the APIs, sets the frequency and schedules the job.
+        """
+        self.logger.debug("Application " + self.__class__.__name__ + " started.")
+        self.job()
+        self.logger.warning("Application " + self.__class__.__name__ + " finished with status " + str(self._status))
 
     @abstractmethod
     def job(self):
         """
         This method is called by the runner. It must contain all the work of the application.
+        It must update the status of the application (RUNNING, ERROR, SUCCESS).
         """
         pass

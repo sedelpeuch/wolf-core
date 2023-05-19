@@ -19,6 +19,13 @@ class Runner:
         """
         self._applications = []
         self._debug = debug
+        self._status = {}
+        self._setup_logger()
+
+    def _setup_logger(self):
+        """
+        This method sets up the logger. It creates a file handler and a console handler. The file handler logs all messages with level WARNING
+        """
         log_name = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         file_path = os.path.dirname(os.path.realpath(__file__))
         os.makedirs(os.path.join(file_path, 'log'), exist_ok=True)
@@ -46,7 +53,8 @@ class Runner:
         """
         This method returns the status of all applications.
         """
-        pass
+        for app in self._applications:
+            self._status[app.__class__.__name__] = app.status
 
     def run(self):
         """
@@ -59,7 +67,7 @@ class Runner:
                 app.job()
         else:
             for app in self._applications:
-                app.frequency.do(app.job)
+                app.frequency.do(app.run)
                 self.logger.debug("Application " + app.__class__.__name__ + " scheduled to run every " + str(
                         app.frequency.interval) + " " + app.frequency.unit + ".")
 
