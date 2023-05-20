@@ -3,7 +3,7 @@
 This module contains the Application Interface of the core module. All applications must implement this interface if they want to be run by the
 runner.
 """
-
+import logging
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import List
@@ -51,15 +51,15 @@ class Application(ABC):
     def __init__(self):
         self._apis: List[api.API] = []
         self.frequency: schedule.Job = schedule.every(1).day
-        self.logger = None
-        self._status = Status.WAITING
+        self.logger = logging.getLogger(__name__)
+        self.__status = Status.WAITING
 
     @property
     def status(self) -> Status:
         """
         This property returns the status of the application.
         """
-        return self._status
+        return self.__status
 
     @status.setter
     def status(self, value: Status):
@@ -68,7 +68,7 @@ class Application(ABC):
         """
         if not isinstance(value, Status):
             raise TypeError("The status must be a Status.")
-        self._status = value
+        self.__status = value
 
     def run(self):
         """
@@ -76,9 +76,9 @@ class Application(ABC):
 
         This method must not be overridden.
         """
-        self.logger.debug("Application " + self.__class__.__name__ + " started.")
+        self.status = Status.RUNNING
         self.job()
-        self.logger.warning("Application " + self.__class__.__name__ + " finished with status " + str(self._status))
+
 
     @abstractmethod
     def job(self):
