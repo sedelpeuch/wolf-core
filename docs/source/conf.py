@@ -6,6 +6,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath('../../wolf_core/'))
+sys.path.insert(0, os.path.abspath('../..'))
+
 
 project = 'Wolf Core'
 copyright = '2023, EirLab Community'

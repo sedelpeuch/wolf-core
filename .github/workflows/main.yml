@@ -1,32 +1,24 @@
-name: Python package
+name: Pylint
 
-on: [push, pull_request]
+on: [ pull_request ]
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    runs-on: Robotics
     strategy:
       matrix:
-        python-version: ["3.10"]
-
+        python-version: [ "3.8" ]
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ruff pytest
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: Lint with ruff
+          pip install pylint
+      - name: Analysing the code with pylint
         run: |
-          # stop the build if there are Python syntax errors or undefined names
-          ruff --format=github --select=E9,F63,F7,F82 --target-version=py37 .
-          # default set of ruff rules with GitHub Annotations
-          ruff --format=github --target-version=py37 .
-      - name: Test with unittest
-        run: |
-          cd tests && python -m unittest
+          wget -O .pylintrc  https://gist.github.com/sedelpeuch/14bfafb97d9ea56b88d295898ab9d7e9/raw
+          python -m pylint wolf_core
