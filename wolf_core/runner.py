@@ -41,7 +41,8 @@ class Runner:
 
     def _load_applications(self):
         """
-        This method loads the applications.
+        This method loads the applications, by creating an instance of each application. The instances are re It also sets the logger of each
+        application.
         """
         for app in application.Application.__subclasses__():
             self._applications.append(app())
@@ -51,14 +52,15 @@ class Runner:
 
     def _get_all_status(self):
         """
-        This method returns the status of all applications.
+        This method gets the status of all applications and stores it in the _status dictionary.
         """
         for app in self._applications:
             self._status[app.__class__.__name__] = app.status
 
     def run(self):
         """
-        This method runs the core module.
+        This method runs the core module by calling the job method of each application. If the debug flag is set, the job method is called only
+        once immediately. If the debug flag is not set, the job method is scheduled to run at the frequency of the application.
         """
         self._load_applications()
         if self._debug:

@@ -17,8 +17,8 @@ class Status(Enum):
     """
     This class is an enum for the status of an application.
     """
-    WAITING = 2
     RUNNING = 1
+    WAITING = 2
     ERROR = 3
     SUCCESS = 4
 
@@ -73,6 +73,8 @@ class Application(ABC):
     def run(self):
         """
         This method is called by the runner. It loads the APIs, sets the frequency and schedules the job.
+
+        This method must not be overridden.
         """
         self.logger.debug("Application " + self.__class__.__name__ + " started.")
         self.job()
