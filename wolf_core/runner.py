@@ -10,6 +10,7 @@ class Runner:
     """
     This class is the main class of the core module.
     """
+
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
 

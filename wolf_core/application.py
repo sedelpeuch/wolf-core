@@ -10,8 +10,6 @@ from typing import List
 
 import schedule
 
-from wolf_core import api
-
 
 class Status(Enum):
     """
@@ -49,7 +47,7 @@ class Application(ABC):
     """
 
     def __init__(self):
-        self._apis: List[api.API] = []
+        self._apis = []
         self.frequency: schedule.Job = schedule.every(1).day
         self.logger = None
         self._status = Status.WAITING
