@@ -1,3 +1,4 @@
-# wolf-core
+wolf-core
+=========
 
-I'm a potatoes
+A simple, lightweight, and fast PHP framework.

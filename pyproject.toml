@@ -4,9 +4,11 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "wolf_core"
-version = "0.1"
-description = ""
+version = "0.2"
+description = "This is a core package for the Wolf project."
 authors = ["sedelpeuch <sebastien@delpeuch.net>"]
+license = "GPL-3.0-or-later"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.8"
