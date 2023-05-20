@@ -14,3 +14,8 @@ include = ["requirements.txt"]
 
 [packages]
 wolf_core = { path = "wolf_core", develop = true }
+
+[project]
+dynamic = ["dependencies"]
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
