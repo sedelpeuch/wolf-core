@@ -1,9 +1,6 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools.dynamic]
-dependencies = { file = ["requirements.txt"] }
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "wolf_core"
@@ -13,11 +10,7 @@ authors = ["sedelpeuch <sebastien@delpeuch.net>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-
-
-[project]
-name = "wolf_core"
-version = "0.1"
+include = ["requirements.txt"]
 
 [packages]
 wolf_core = { path = "wolf_core", develop = true }
