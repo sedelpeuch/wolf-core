@@ -18,11 +18,11 @@ class Runner:
         This is the constructor of the class.
         """
         self._applications = []
-        self._debug = debug
-        self._status = {}
-        self._setup_logger()
+        self.__debug = debug
+        self.__status = {}
+        self.__setup_logger()
 
-    def _setup_logger(self):
+    def __setup_logger(self):
         """
         This method sets up the logger. It creates a file handler and a console handler. The file handler logs all messages with level WARNING
         """
@@ -39,7 +39,7 @@ class Runner:
         self.logger.addHandler(file_handler)
         self.logger.addHandler(console_handler)
 
-    def _load_applications(self):
+    def __load_applications(self):
         """
         This method loads the applications, by creating an instance of each application. The instances are re It also sets the logger of each
         application.
@@ -50,20 +50,20 @@ class Runner:
         for app in self._applications:
             app.logger = self.logger
 
-    def _get_all_status(self):
+    def __get_all_status(self):
         """
         This method gets the status of all applications and stores it in the _status dictionary.
         """
         for app in self._applications:
-            self._status[app.__class__.__name__] = app.status
+            self.__status[app.__class__.__name__] = app.status
 
     def run(self):
         """
         This method runs the core module by calling the job method of each application. If the debug flag is set, the job method is called only
         once immediately. If the debug flag is not set, the job method is scheduled to run at the frequency of the application.
         """
-        self._load_applications()
-        if self._debug:
+        self.__load_applications()
+        if self.__debug:
             for app in self._applications:
                 self.logger.debug("Application" + app.__class__.__name__ + " running.")
                 app.job()
