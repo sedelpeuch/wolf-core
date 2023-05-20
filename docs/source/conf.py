@@ -15,9 +15,6 @@ author = 'sedelpeuch'
 version = '0.1'
 
 # -- General configuration
-import subprocess
-
-subprocess.run("cd ../../ && poetry install", shell=True, check=True)
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.intersphinx', 'myst_parser', ]
 
 intersphinx_mapping = {'python': ('https://docs.python.org/2/', None), 'sphinx': ('https://www.sphinx-doc.org/en/master/', None), }
