@@ -1,6 +1,7 @@
 Python Documentation
 ===================================
 
+This is a documentation for the Python part of the project.
 
 .. automodule:: runner
    :members:
