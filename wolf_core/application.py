@@ -48,11 +48,12 @@ class Application(ABC):
     :type _frequency: schedule.Job
     """
 
-    def __init__(self):
+    def __init__(self, test=False):
         self._apis: List[api.API] = []
         self.frequency: schedule.Job = schedule.every(1).day
         self.logger = logging.getLogger(__name__)
         self.__status = Status.WAITING
+        self.__test = test
 
     @property
     def status(self) -> Status:
@@ -77,8 +78,11 @@ class Application(ABC):
         This method must not be overridden.
         """
         self.status = Status.RUNNING
-        self.job()
-
+        try:
+            self.job()
+        except Exception as e:
+            self.status = Status.ERROR
+            self.logger.error("An error occurred while running the application: %s", e)
 
     @abstractmethod
     def job(self):
