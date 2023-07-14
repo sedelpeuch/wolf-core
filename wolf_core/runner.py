@@ -18,12 +18,13 @@ class Runner:
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
 
-    def __init__(self, debug=False):
+    def __init__(self, debug=False, test=False):
         """
         This is the constructor of the class.
         """
         self._applications = []
         self.__debug = debug
+        self.__test = test
         self.__status = {}
         self.__setup_logger()
 

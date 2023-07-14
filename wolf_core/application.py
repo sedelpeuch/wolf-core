@@ -43,17 +43,16 @@ class Application(ABC):
     :see: :class:`api.API`
     :type _apis: List[api.API]
 
-    :ivar _frequency: The frequency of the application.
+    :ivar frequency: The frequency of the application.
     :see: :class:`schedule.Job`
-    :type _frequency: schedule.Job
+    :type frequency: schedule.Job
     """
 
-    def __init__(self, test=False):
+    def __init__(self):
         self._apis: List[api.API] = []
-        self.frequency: schedule.Job = schedule.every(1).day
+        self.frequency: schedule.Job = schedule.every().day
         self.logger = logging.getLogger(__name__)
         self.__status = Status.WAITING
-        self.__test = test
 
     @property
     def status(self) -> Status:
@@ -83,6 +82,7 @@ class Application(ABC):
         except Exception as e:
             self.status = Status.ERROR
             self.logger.error("An error occurred while running the application: %s", e)
+            raise
 
     @abstractmethod
     def job(self):
