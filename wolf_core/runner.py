@@ -1,9 +1,16 @@
 #! /usr/bin/env python3
+
+"""
+This module contains the Runner class.
+"""
+
 import datetime
 import logging
 import os
 import threading
 import time
+
+import schedule
 
 from wolf_core import application
 
@@ -57,10 +64,12 @@ class Runner:
             self._applications = []
         for app in application.Application.__subclasses__():
             if self.is_method_overridden(app, "run"):
-                self.logger.warning("Application " + app.__name__ + " overrides the run method. This is not allowed. Skipping application.")
+                self.logger.warning(
+                    "Application " + app.__name__ + " overrides the run method. This is not allowed. Skipping application.")
                 continue
             if not self.is_method_overridden(app, "job"):
-                self.logger.warning("Application " + app.__name__ + " does not override the job method. This is not allowed. Skipping application.")
+                self.logger.warning(
+                    "Application " + app.__name__ + " does not override the job method. This is not allowed. Skipping application.")
                 continue
             self._applications.append(app())
             self.logger.debug("Application " + app.__name__ + " loaded.")
@@ -94,9 +103,12 @@ class Runner:
             else:
                 time.sleep(5)
 
-    def is_method_overridden(cls, app, method):
+    @staticmethod
+    def is_method_overridden(app, method):
         """
         This method checks if the given method is overridden in any of the applications.
+
+        :param app: The application to check.
         :param method: The method to check.
         :return: True if the method is overridden by the app, False otherwise.
         """
@@ -121,7 +133,10 @@ class Runner:
             for app in self._applications:
                 app.frequency.do(app.run)
                 self.logger.debug("Application " + app.__class__.__name__ + " scheduled to run every " + str(
-                        app.frequency.interval) + " " + app.frequency.unit + ".")
+                    app.frequency.interval) + " " + app.frequency.unit + ".")
+            while True:
+                schedule.run_pending()
+                time.sleep(0.5)
 
     def shutdown(self):
         """
