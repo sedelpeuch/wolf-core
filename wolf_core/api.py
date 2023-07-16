@@ -3,7 +3,7 @@
 """
 This module contains the API interface.
 """
-
+import logging
 from abc import ABC, abstractmethod
 
 
@@ -21,12 +21,16 @@ class API(ABC):
     :type test: bool, optional
     """
 
-    def __init__(self, url, test_url, token, test=False):
+    instances = []
+
+    def __init__(self, url=None, test_url=None, token=None, test=False):
         """
         This is the constructor of the class.
         """
         self._url = test_url if test else url
         self._token = token
+        self.__class__.instances.append(self)
+        self.logger = logging.getLogger(__name__)
 
     @abstractmethod
     def get(self, resource, params=None):

@@ -12,7 +12,7 @@ import time
 
 import schedule
 
-from wolf_core import application
+from wolf_core import application, api
 
 
 class Runner:
@@ -27,19 +27,22 @@ class Runner:
         """
         This is the constructor of the class.
         """
+        self._apis = []
         self._applications = []
-        self.thread_run = threading.Event()
-        self.thread_run.set()
-        self.__debug = debug
         self.__test = test
         self.__status = {}
+        self.__debug = debug
+
+        self.thread_run = threading.Event()
+        self.thread_run.set()
         self._lock = threading.Lock()
         self._status_thread = None
+
         self.__setup_logger()
 
     def __setup_logger(self):
         """
-        This method sets up the logger. It creates a file handler and a console handler. The file handler logs all messages with level WARNING
+        This method sets up the logger. It creates a file handler and a console handler. The file handler logs all messages with level WARNING.
         """
         self.logger.handlers = []
         log_name = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -63,8 +66,11 @@ class Runner:
 
     def __load_applications(self):
         """
-        This method loads the applications, by creating an instance of each application. The instances are re It also sets the logger of each
-        application.
+        This method loads the applications, by creating an instance of each application.
+        The instances are reset if there are existing applications.
+        It also sets the logger of each application.
+
+        :return: None
         """
         if len(self._applications) != 0:
             self.logger.debug("Deleting old applications.")
@@ -82,6 +88,21 @@ class Runner:
             self.logger.debug("Application " + app.__name__ + " loaded.")
         for app in self._applications:
             app.logger = self.logger
+
+    def __load_apis(self):
+        """
+        This method loads the APIs, by creating an instance of each API. The instances are stored in the `_apis` list attribute. It also sets the logs of each API.
+
+        :return: None
+        """
+        if len(self._apis) != 0:
+            self.logger.debug("Deleting old APIs.")
+            self._apis = []
+        for a in api.API.__subclasses__():
+            self._apis.append(a())
+            self.logger.debug("API " + a.__name__ + " loaded.")
+        for a in self._apis:
+            a.logger = self.logger
 
     def __get_all_status(self):
         """
@@ -127,9 +148,12 @@ class Runner:
 
     def run(self):
         """
-        This method runs the core module by calling the job method of each application. If the debug flag is set, the job method is called only
+        Runs the core module by calling the job method of each application. If the debug flag is set, the job method is called only
         once immediately. If the debug flag is not set, the job method is scheduled to run at the frequency of the application.
+
+        :return: None
         """
+        self.__load_apis()
         self.__load_applications()
         if self.__debug:
             for app in self._applications:

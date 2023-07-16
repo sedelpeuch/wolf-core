@@ -49,7 +49,7 @@ class Application(ABC):
     """
 
     def __init__(self):
-        self._apis: List[api.API] = []
+        self._apis: List[api.API] = api.API.instances
         self.frequency: schedule.Job = schedule.every().day
         self.logger = logging.getLogger(__name__)
         self.__status = Status.WAITING
