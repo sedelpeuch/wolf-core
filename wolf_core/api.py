@@ -29,7 +29,7 @@ class API(ABC):
         self._token = token
 
     @abstractmethod
-    def get(self, resource):
+    def get(self, resource, params=None):
         """
         This method is intended to submit GET requests to the API.
 
@@ -49,3 +49,61 @@ class API(ABC):
         :type data: dict
         """
         pass
+
+    @abstractmethod
+    def put(self, resource, data):
+        """
+        This method is intended to submit PUT requests to the API.
+
+        :param resource: The specific resource in the API that the PUT request is made to.
+        :type resource: str
+        :param data: The data to send in the PUT request.
+        :type data: dict
+        """
+        pass
+
+    @abstractmethod
+    def delete(self, resource):
+        """
+        This method is intended to submit DELETE requests to the API.
+
+        :param resource: The specific resource in the API that the DELETE request is made to.
+        :type resource: str
+        """
+        pass
+
+
+class RequestResponse:
+    """
+    This class is used to store the response from an API request.
+
+    :param status_code: The status code of the response.
+    :type status_code: int
+    :param data: The data in the response.
+    :type data: dict
+    """
+
+    def __init__(self, status_code, data):
+        """
+        This is the constructor of the class.
+        """
+        if not isinstance(status_code, int):
+            raise ValueError("`status_code` must be an integer")
+        if not isinstance(data, dict):
+            raise ValueError("`data` must be a dictionary")
+        self.__status_code = status_code
+        self.__data = data
+
+    @property
+    def status_code(self):
+        """
+        This is the status code property.
+        """
+        return self.__status_code
+
+    @property
+    def data(self):
+        """
+        This is the data property.
+        """
+        return self.__data
