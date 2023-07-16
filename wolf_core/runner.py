@@ -14,8 +14,6 @@ import schedule
 
 from wolf_core import application
 
-THREAD_RUN = True
-
 
 class Runner:
     """
@@ -30,20 +28,28 @@ class Runner:
         This is the constructor of the class.
         """
         self._applications = []
+        self.thread_run = threading.Event()
+        self.thread_run.set()
         self.__debug = debug
         self.__test = test
         self.__status = {}
+        self._lock = threading.Lock()
+        self._status_thread = None
         self.__setup_logger()
 
     def __setup_logger(self):
         """
         This method sets up the logger. It creates a file handler and a console handler. The file handler logs all messages with level WARNING
         """
+        self.logger.handlers = []
         log_name = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         file_path = os.path.dirname(os.path.realpath(__file__))
         os.makedirs(os.path.join(file_path, 'log'), exist_ok=True)
-        file_handler = logging.FileHandler(file_path + "/log" + '/wolf_core_' + log_name + '.log')
-        file_handler.setLevel(logging.WARNING)
+        try:
+            file_handler = logging.FileHandler(file_path + "/log" + '/wolf_core_' + log_name + '.log')
+        except PermissionError:
+            raise PermissionError("Could not create log file. Please check permissions.")
+        file_handler.setLevel(logging.DEBUG)
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -51,7 +57,8 @@ class Runner:
         console_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)
         self.logger.addHandler(console_handler)
-        threading.Thread(target=self.__status_thread).start()
+        self._status_thread = threading.Thread(target=self.__status_thread)
+        self._status_thread.start()
         time.sleep(1)
 
     def __load_applications(self):
@@ -87,17 +94,18 @@ class Runner:
         """
         This method is the thread that is run by the status method. It gets the status of all applications and prints it.
         """
-        while THREAD_RUN:
+        while self.thread_run.is_set():
             self.__get_all_status()
-            for app in self._applications:
-                if self.__status[app.__class__.__name__] is application.Status.ERROR:
-                    self.logger.error("Application " + app.__class__.__name__ + " failed.")
-                    self._applications[self._applications.index(app)].status = application.Status.WAITING
-                elif self.__status[app.__class__.__name__] is application.Status.SUCCESS:
-                    self.logger.warning("Application " + app.__class__.__name__ + " succeeded.")
-                    self._applications[self._applications.index(app)].status = application.Status.WAITING
-                elif self.__status[app.__class__.__name__] is application.Status.RUNNING:
-                    self.logger.debug("Application " + app.__class__.__name__ + " is running.")
+            with self._lock:
+                for app in self._applications:
+                    if self.__status[app.__class__.__name__] is application.Status.ERROR:
+                        self.logger.error("Application " + app.__class__.__name__ + " failed.")
+                        self._applications[self._applications.index(app)].status = application.Status.WAITING
+                    elif self.__status[app.__class__.__name__] is application.Status.SUCCESS:
+                        self.logger.warning("Application " + app.__class__.__name__ + " succeeded.")
+                        self._applications[self._applications.index(app)].status = application.Status.WAITING
+                    elif self.__status[app.__class__.__name__] is application.Status.RUNNING:
+                        self.logger.debug("Application " + app.__class__.__name__ + " is running.")
             if self.__debug:
                 time.sleep(0.1)
             else:
@@ -122,12 +130,11 @@ class Runner:
         This method runs the core module by calling the job method of each application. If the debug flag is set, the job method is called only
         once immediately. If the debug flag is not set, the job method is scheduled to run at the frequency of the application.
         """
-        global THREAD_RUN
         self.__load_applications()
         if self.__debug:
             for app in self._applications:
                 app.run()
-            THREAD_RUN = False
+            self.thread_run.clear()
             return True
         else:
             for app in self._applications:
@@ -135,11 +142,21 @@ class Runner:
                 self.logger.debug("Application " + app.__class__.__name__ + " scheduled to run every " + str(
                     app.frequency.interval) + " " + app.frequency.unit + ".")
             while True:
-                schedule.run_pending()
-                time.sleep(0.5)
+                try:
+                    schedule.run_pending()
+                    time.sleep(0.5)
+                except KeyboardInterrupt:
+                    self.shutdown()
+                    return True
 
     def shutdown(self):
         """
         This method shuts down the core module.
         """
-        pass
+        self.thread_run.clear()
+        schedule.clear()
+        for app in self._applications:
+            app.shutdown()
+        if self._status_thread is not None:
+            self._status_thread.join()
+        self.logger.debug("Shutting down.")

@@ -81,13 +81,18 @@ class Application(ABC):
             self.job()
         except Exception as e:
             self.status = Status.ERROR
-            self.logger.error("An error occurred while running the application: %s", e)
-            raise
+            self.logger.error("An error occurred while running the application: {} - {}".format(type(e).__name__, e))
 
     @abstractmethod
     def job(self):
         """
         This method is called by the runner. It must contain all the work of the application.
         It must update the status of the application (RUNNING, ERROR, SUCCESS).
+        """
+        pass
+
+    def shutdown(self):
+        """
+        This method is called by the runner when the application is stopped. It must stop all the work of the application.
         """
         pass
