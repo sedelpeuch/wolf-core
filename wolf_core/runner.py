@@ -88,6 +88,8 @@ class Runner:
             self.logger.debug("Application " + app.__name__ + " loaded.")
         for app in self._applications:
             app.logger = self.logger
+            if self.__debug:
+                app.debug = True
 
     def __load_apis(self):
         """

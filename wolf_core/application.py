@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 """
-This module contains the Application Interface of the core module. All applications must implement this interface if they want to be run by the
-runner.
+This module contains the Application Interface of the core module. All applications must implement this interface if they want to be run by the runner.
 """
 import logging
 from abc import ABC, abstractmethod
@@ -53,6 +52,7 @@ class Application(ABC):
         self.frequency: schedule.Job = schedule.every().day
         self.logger = logging.getLogger(__name__)
         self.__status = Status.WAITING
+        self.__debug = False
 
     @property
     def status(self) -> Status:
@@ -70,6 +70,31 @@ class Application(ABC):
             raise TypeError("The status must be a Status.")
         self.__status = value
 
+    @property
+    def debug(self) -> bool:
+        """
+        This property returns the debug mode of the application.
+        """
+        return self.__debug
+
+    @debug.setter
+    def debug(self, value: bool):
+        """
+        This property sets the debug mode of the application.
+        """
+        if not isinstance(value, bool):
+            raise TypeError("The debug mode must be a boolean.")
+        self.__debug = value
+
+    def api(self, name):
+        """
+        This property returns the API with the given name.
+        """
+        for api in self._apis:
+            if api.__class__.__name__ == name:
+                return api
+        raise ValueError("The API with name {} does not exist.".format(name))
+
     def run(self):
         """
         This method is called by the runner. It loads the APIs, sets the frequency and schedules the job.
@@ -82,6 +107,8 @@ class Application(ABC):
         except Exception as e:
             self.status = Status.ERROR
             self.logger.error("An error occurred while running the application: {} - {}".format(type(e).__name__, e))
+            if self.__debug:
+                raise e
 
     @abstractmethod
     def job(self):
