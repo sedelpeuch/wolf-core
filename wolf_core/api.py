@@ -181,3 +181,8 @@ class RequestResponse:
         This is the data property.
         """
         return self._data
+
+    def __eq__(self, other):
+        if not isinstance(other, RequestResponse):
+            return False
+        return self.status_code == other.status_code and self.data == other.data
