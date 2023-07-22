@@ -10,7 +10,7 @@ class TestApplication(application.Application):
 
     def job(self):
         time.sleep(1)
-        self.status = application.Status.SUCCESS
+        self.set_status(application.Status.SUCCESS)
         time.sleep(0.5)
 
 class EmptyApplication(application.Application):
@@ -36,7 +36,6 @@ class TestRunner(unittest.TestCase):
     def test_initialisation(self):
         self.assertEqual(self.test_runner._applications, [])
         self.assertEqual(self.test_runner._Runner__debug, True)
-        self.assertEqual(self.test_runner._Runner__status, {})
 
     def test_setup_logger(self):
         self.test_runner._Runner__setup_logger()
@@ -50,7 +49,7 @@ class TestRunner(unittest.TestCase):
     def test_get_status(self):
         self.test_runner._Runner__load_applications()
         self.test_runner._Runner__get_status(self.test_runner._applications[0])
-        self.assertNotEqual(self.test_runner._Runner__status, {})
+        self.assertNotEqual(self.test_runner._Runner__app_health["TestApplication"]["status"], {application.Status.WAITING})
 
     def test_run(self):
         self.test_runner.run()
