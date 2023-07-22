@@ -47,9 +47,9 @@ class TestRunner(unittest.TestCase):
         self.assertNotEqual(self.test_runner._applications, [])
         self.assertNotEqual(self.test_runner._applications[0].logger, None)
 
-    def test_get_all_status(self):
+    def test_get_status(self):
         self.test_runner._Runner__load_applications()
-        self.test_runner._Runner__get_all_status()
+        self.test_runner._Runner__get_status(self.test_runner._applications[0])
         self.assertNotEqual(self.test_runner._Runner__status, {})
 
     def test_run(self):

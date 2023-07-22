@@ -38,7 +38,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_empty_run(self):
         self.test_application.run()
-        self.assertEqual(self.test_application.status, application.Status.SUCCESS)
+        self.assertEqual(self.test_application.status, application.Status.WAITING)
 
 
 if __name__ == '__main__':
