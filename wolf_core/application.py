@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 """
-This module contains the Application Interface of the core module. All applications must implement this interface if they want to be run by the runner.
+This module contains the Application Interface of the core module.
+All applications must implement this interface if they want to be run by the runner.
 """
 import logging
 import threading
@@ -34,11 +35,16 @@ class Status(Enum):
 
 class Application(ABC):
     """
-    Application Interface of the core module. All applications must implement this interface if they want to be run by the runner.
+    Application Interface of the core module.
+    All applications must implement this interface if they want to be run by the runner.
 
-    An application can use one or more APIs to work. The APIs are stored in a list. The frequency of the application is stored in a schedule.Job.
+    An application can use one or more APIs to work.
+    The APIs are stored in a list.
+    The frequency of the application is stored in a schedule.Job.
 
-    The job method is the method that is called by the runner. It must be implemented by the application. This method must contain all the work of
+    The job method is the method that is called by the runner.
+    It must be implemented by the application.
+    This method must contain all the work of
     the application.
 
     :ivar _apis: The list of APIs used by the application.
@@ -54,125 +60,147 @@ class Application(ABC):
         self._apis: List[api.API] = api.API.instances
         self.frequency: schedule.Job = schedule.every().day
         self.logger = logging.getLogger(__name__)
-        self.status_lock = threading.Lock()
-        self.__status = Status.WAITING
-        self.message_lock = threading.Lock()
-        self.__message = "OK"
-        self.last_execution_lock = threading.Lock()
-        self.__last_execution = Status.NEVER
+
+        self.heal_lock = threading.Lock()
+        self.__health_check = {
+            "status": Status.WAITING,
+            "message": "OK",
+            "last_execution": Status.NEVER
+        }
 
         self.app_lock = threading.Lock()
         self.__debug = False
 
     @property
+    def health_check(self):
+        """
+        This property returns the health check of the application.
+
+        :return: The health check of the application
+        :rtype: bool
+        :raises: None
+        """
+        return self.__health_check
+
+    @health_check.setter
+    def health_check(self, value):
+        """
+        This method sets the health check of the application.
+
+        :param value: A dictionary representing the health check information.
+        :return: None
+        """
+        if not isinstance(value, dict):
+            raise TypeError("The health check must be a dict.")
+        self.heal_lock.acquire()
+        try:
+            self.__health_check["status"] = value["status"]
+        except Exception as e:
+            pass
+        try:
+            self.__health_check["message"] = value["message"]
+        except KeyError:
+            pass
+        try:
+            self.__health_check["last_execution"] = value["last_execution"]
+        except KeyError:
+            pass
+        self.heal_lock.release()
+
+    @property
     def status(self) -> Status:
         """
         This property returns the status of the application.
-        """
-        return self.__status
 
-    @status.setter
-    def status(self, value: Status):
+        :return: The status of the application.
+        :rtype: Status.
         """
-        This property sets the status of the application.
+        return self.__health_check["status"]
+
+    def set_status(self, value: Status):
+        """
+        This method sets the status of the application.
+
+        :param value: The status value to be set.
+        Must be of type Status.
+        :return: None
         """
         if not isinstance(value, Status):
             raise TypeError("The status must be a Status.")
-        with self.status_lock:
-            self.__status = value
-
-    @property
-    def message(self) -> str:
-        """
-        This property returns the message of the application.
-        """
-        return self.__message
-
-    @message.setter
-    def message(self, value: str):
-        """
-        This property sets the message of the application.
-        """
-        if not isinstance(value, str):
-            raise TypeError("The message must be a string.")
-        with self.message_lock:
-            self.__message = value
+        self.health_check = {"status": value}
 
     @property
     def debug(self) -> bool:
         """
         This property returns the debug mode of the application.
+
+        :return: The debug mode of the application as a boolean value.
         """
         return self.__debug
 
     @debug.setter
     def debug(self, value: bool):
         """
-        This property sets the debug mode of the application.
+        This method sets the debug mode of the application.
+
+        :param value: A boolean value indicating whether debug mode should be enabled or disabled.
+        :return: None
         """
         if not isinstance(value, bool):
             raise TypeError("The debug mode must be a boolean.")
         self.__debug = value
 
-    @property
-    def last_execution(self) -> Status:
-        """
-        This property returns the last execution of the application.
-        """
-        return self.__last_execution
-
-    @last_execution.setter
-    def last_execution(self, value: Status):
-        """
-        This property sets the last execution of the application.
-        """
-        if not isinstance(value, Status):
-            raise TypeError("The last execution must be a Status.")
-        with self.last_execution_lock:
-            self.__last_execution = value
-
     def api(self, name):
         """
-        This property returns the API with the given name.
+        This method returns the API with the given name.
+
+        :param name: The name of the API.
+        :return: The API object corresponding to the given name.
+        :raises ValueError: If the API with the given name does not exist.
         """
-        for api in self._apis:
-            if api.__class__.__name__ == name:
-                return api
+        for api_object in self._apis:
+            if api_object.__class__.__name__ == name:
+                return api_object
         raise ValueError("The API with name {} does not exist.".format(name))
 
     def run(self):
         """
-        This method is called by the runner. It loads the APIs, sets the frequency and schedules the job.
+        The runner calls this method.
+        It loads the APIs, sets the frequency and schedules the job.
 
         This method must not be overridden.
+        :return: None
         """
-        # get unique int to identify the run
         self.app_lock.acquire()
-        self.status = Status.RUNNING
+        self.set_status(Status.RUNNING)
         try:
             self.job()
         except Exception as e:
-            self.status = Status.ERROR
-            self.message = str(e)
+            self.health_check = {"status": Status.ERROR, "message": str(e)}
             self.logger.error("An error occurred while running the application: {} - {}".format(type(e).__name__, e))
             if self.__debug:
                 raise e
         finally:
-            self.last_execution = self.status
-        self.status = Status.WAITING
+            self.health_check = {"last_execution": self.status}
         self.app_lock.release()
         time.sleep(1)
 
     @abstractmethod
     def job(self):
         """
-        This method is called by the runner. It must contain all the work of the application.
+        The runner calls this method.
+        It must contain all the work of the application.
         It must update the status of the application (RUNNING, ERROR, SUCCESS).
+
+        :return: None
         """
         pass
 
     def shutdown(self):
         """
-        This method is called by the runner when the application is stopped. It must stop all the work of the application.
+        The runner calls this method when the application is stopped.
+        It must stop all the work of the application.
+
+        :return: None
         """
         pass

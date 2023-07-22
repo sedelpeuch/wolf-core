@@ -24,19 +24,13 @@ class Runner:
     logger.setLevel(logging.DEBUG)
 
     def __init__(self, debug=False, test=False):
-        """
-        This is the constructor of the class.
-        """
         self._apis = []
         self._applications = []
 
         self.__test = test
         self.__debug = debug
 
-        self.__status = {}
-        self.__last_status = {}
-        self.__message = {}
-        self.__last_execution = {}
+        self.__app_health = {}
 
         self.thread_run = threading.Event()
         self.thread_run.set()
@@ -47,7 +41,10 @@ class Runner:
 
     def __setup_logger(self):
         """
-        This method sets up the logger. It creates a file handler and a console handler. The file handler logs all messages with level WARNING.
+        This method sets up the logger.
+        It creates a file handler and a console handler.
+        The file handler logs all messages with level WARNING.
+
         :return: None
         """
         self.logger.handlers = []
@@ -82,11 +79,13 @@ class Runner:
         for app in application.Application.__subclasses__():
             if self.is_method_overridden(app, "run"):
                 self.logger.warning(
-                    "Application " + app.__name__ + " overrides the run method. This is not allowed. Skipping application.")
+                    "Application " + app.__name__ + "overrides the run method. This is not allowed. Skipping "
+                                                    "application.")
                 continue
             if not self.is_method_overridden(app, "job"):
                 self.logger.warning(
-                    "Application " + app.__name__ + " does not override the job method. This is not allowed. Skipping application.")
+                    "Application " + app.__name__ + "does not override the job method. This is not allowed. Skipping "
+                                                    "application.")
                 continue
             self._applications.append(app())
             self.logger.debug("Application " + app.__name__ + " loaded.")
@@ -114,34 +113,34 @@ class Runner:
 
     def __get_status(self, app):
         """
-        This method gets the status of all applications and stores it in the _status dictionary.
+        Get the status of an application.
+
+        :param app: The application to get the status of.
+        :return: None
         """
-        app.status_lock.acquire()
-        self.__status[app.__class__.__name__] = app.status
-        app.status_lock.release()
-        app.message_lock.acquire()
-        self.__message[app.__class__.__name__] = app.message
-        app.message_lock.release()
-        app.last_execution_lock.acquire()
-        self.__last_execution[app.__class__.__name__] = app.last_execution
-        app.last_execution_lock.release()
+        app.heal_lock.acquire()
+        self.__app_health[app.__class__.__name__] = app.health_check
+        app.heal_lock.release()
 
     def __status_thread(self, app):
         """
-        This method is the thread that is run by the status method. It gets the status of all applications and prints it
+        This method is the thread that is run by the status method.
+        It gets the status of all applications and prints it.
+
+        :param app: The application object for which the status is to be retrieved.
+        :return: None
         """
         while self.thread_run.is_set():
-            self.__get_status(app)
             if app.app_lock.locked():
                 continue
-            if self.__status[app.__class__.__name__] is application.Status.ERROR:
+            self.__get_status(app)
+            if self.__app_health[app.__class__.__name__]["status"] is application.Status.ERROR:
                 self.logger.error("Application " + app.__class__.__name__ + " failed.")
-            elif self.__status[app.__class__.__name__] is application.Status.SUCCESS:
+            elif self.__app_health[app.__class__.__name__]["status"] is application.Status.SUCCESS:
                 self.logger.warning("Application " + app.__class__.__name__ + " succeeded.")
             self.__grafana_logger.post(app.__class__.__name__,
-                                       self.__last_execution[app.__class__.__name__].value,
-                                       self.__message[app.__class__.__name__])
-
+                                       self.__app_health[app.__class__.__name__]["last_execution"].value,
+                                       self.__app_health[app.__class__.__name__]["message"])
 
     @staticmethod
     def is_method_overridden(app, method):
@@ -159,8 +158,9 @@ class Runner:
 
     def run(self):
         """
-        Runs the core module by calling the job method of each application. If the debug flag is set, the job method is called only
-        once immediately. If the debug flag is not set, the job method is scheduled to run at the frequency of the application.
+        Runs the core module by calling the job method of each application.
+        If the debug flag is set, the job method is called only once immediately.
+        If the debug flag is not set, the job method is scheduled to run at the frequency of the application.
 
         :return: None
         """
@@ -191,6 +191,8 @@ class Runner:
     def shutdown(self):
         """
         This method shuts down the core module.
+
+        :return: None
         """
         self.thread_run.clear()
         schedule.clear()
