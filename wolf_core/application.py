@@ -3,6 +3,8 @@
 This module contains the Application Interface of the core module. All applications must implement this interface if they want to be run by the runner.
 """
 import logging
+import threading
+import time
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import List
@@ -16,6 +18,7 @@ class Status(Enum):
     """
     This class is an enum for the status of an application.
     """
+    NEVER = 0
     RUNNING = 1
     WAITING = 2
     ERROR = 3
@@ -51,7 +54,14 @@ class Application(ABC):
         self._apis: List[api.API] = api.API.instances
         self.frequency: schedule.Job = schedule.every().day
         self.logger = logging.getLogger(__name__)
+        self.status_lock = threading.Lock()
         self.__status = Status.WAITING
+        self.message_lock = threading.Lock()
+        self.__message = "OK"
+        self.last_execution_lock = threading.Lock()
+        self.__last_execution = Status.NEVER
+
+        self.app_lock = threading.Lock()
         self.__debug = False
 
     @property
@@ -68,7 +78,25 @@ class Application(ABC):
         """
         if not isinstance(value, Status):
             raise TypeError("The status must be a Status.")
-        self.__status = value
+        with self.status_lock:
+            self.__status = value
+
+    @property
+    def message(self) -> str:
+        """
+        This property returns the message of the application.
+        """
+        return self.__message
+
+    @message.setter
+    def message(self, value: str):
+        """
+        This property sets the message of the application.
+        """
+        if not isinstance(value, str):
+            raise TypeError("The message must be a string.")
+        with self.message_lock:
+            self.__message = value
 
     @property
     def debug(self) -> bool:
@@ -86,6 +114,23 @@ class Application(ABC):
             raise TypeError("The debug mode must be a boolean.")
         self.__debug = value
 
+    @property
+    def last_execution(self) -> Status:
+        """
+        This property returns the last execution of the application.
+        """
+        return self.__last_execution
+
+    @last_execution.setter
+    def last_execution(self, value: Status):
+        """
+        This property sets the last execution of the application.
+        """
+        if not isinstance(value, Status):
+            raise TypeError("The last execution must be a Status.")
+        with self.last_execution_lock:
+            self.__last_execution = value
+
     def api(self, name):
         """
         This property returns the API with the given name.
@@ -101,14 +146,22 @@ class Application(ABC):
 
         This method must not be overridden.
         """
+        # get unique int to identify the run
+        self.app_lock.acquire()
         self.status = Status.RUNNING
         try:
             self.job()
         except Exception as e:
             self.status = Status.ERROR
+            self.message = str(e)
             self.logger.error("An error occurred while running the application: {} - {}".format(type(e).__name__, e))
             if self.__debug:
                 raise e
+        finally:
+            self.last_execution = self.status
+        self.status = Status.WAITING
+        self.app_lock.release()
+        time.sleep(1)
 
     @abstractmethod
     def job(self):
