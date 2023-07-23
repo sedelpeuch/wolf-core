@@ -31,6 +31,7 @@ class Runner:
         self.__debug = debug
 
         self.__app_health = {}
+        self.__last_log = {}
 
         self.thread_run = threading.Event()
         self.thread_run.set()
@@ -118,9 +119,9 @@ class Runner:
         :param app: The application to get the status of.
         :return: None
         """
-        app.heal_lock.acquire()
+        app.app_lock.acquire()
         self.__app_health[app.__class__.__name__] = app.health_check
-        app.heal_lock.release()
+        app.app_lock.release()
 
     def __status_thread(self, app):
         """
@@ -131,16 +132,25 @@ class Runner:
         :return: None
         """
         while self.thread_run.is_set():
-            if app.app_lock.locked():
-                continue
             self.__get_status(app)
-            if self.__app_health[app.__class__.__name__]["status"] is application.Status.ERROR:
-                self.logger.error("Application " + app.__class__.__name__ + " failed.")
-            elif self.__app_health[app.__class__.__name__]["status"] is application.Status.SUCCESS:
-                self.logger.warning("Application " + app.__class__.__name__ + " succeeded.")
-            self.__grafana_logger.post(app.__class__.__name__,
-                                       self.__app_health[app.__class__.__name__]["last_execution"].value,
-                                       self.__app_health[app.__class__.__name__]["message"])
+
+            app_health = self.__app_health[app.__class__.__name__]
+            if app.__class__.__name__ not in self.__last_log:
+                self.__last_log[app.__class__.__name__] = app_health["id"]
+
+            if self.__last_log[app.__class__.__name__] == app_health["id"]:
+                continue
+            elif self.__last_log[app.__class__.__name__] != app_health["id"]:
+                if app_health["status"] is application.Status.ERROR:
+                    self.logger.error("Application " + app.__class__.__name__ + " failed.")
+                elif app_health["status"] is application.Status.SUCCESS:
+                    self.logger.warning("Application " + app.__class__.__name__ + " succeeded.")
+                if (not app_health["status"] is application.Status.WAITING or not
+                app_health["status"] is application.Status.RUNNING):
+                    self.__grafana_logger.post(app.__class__.__name__,
+                                               app_health["last_execution"].value,
+                                               app_health["message"])
+                self.__last_log[app.__class__.__name__] = app_health["id"]
 
     @staticmethod
     def is_method_overridden(app, method):

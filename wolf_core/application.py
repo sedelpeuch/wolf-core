@@ -9,11 +9,11 @@ import time
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import List
+import uuid
 
 import schedule
 
 from wolf_core import api
-
 
 class Status(Enum):
     """
@@ -61,11 +61,12 @@ class Application(ABC):
         self.frequency: schedule.Job = schedule.every().day
         self.logger = logging.getLogger(__name__)
 
-        self.heal_lock = threading.Lock()
+
         self.__health_check = {
             "status": Status.WAITING,
-            "message": "OK",
-            "last_execution": Status.NEVER
+            "message": " ",
+            "last_execution": Status.NEVER,
+            "id": -1
         }
 
         self.app_lock = threading.Lock()
@@ -92,7 +93,6 @@ class Application(ABC):
         """
         if not isinstance(value, dict):
             raise TypeError("The health check must be a dict.")
-        self.heal_lock.acquire()
         try:
             self.__health_check["status"] = value["status"]
         except Exception as e:
@@ -105,7 +105,10 @@ class Application(ABC):
             self.__health_check["last_execution"] = value["last_execution"]
         except KeyError:
             pass
-        self.heal_lock.release()
+        try:
+            self.__health_check["id"] = value["id"]
+        except KeyError:
+            pass
 
     @property
     def status(self) -> Status:
@@ -172,21 +175,21 @@ class Application(ABC):
         :return: None
         """
         self.app_lock.acquire()
-        self.set_status(Status.RUNNING)
+        self.health_check = {"status": Status.RUNNING, "id": uuid.uuid4().int, "message": " "}
+        state = Status.RUNNING
         try:
-            self.job()
+            state = self.job()
         except Exception as e:
             self.health_check = {"status": Status.ERROR, "message": str(e)}
             self.logger.error("An error occurred while running the application: {} - {}".format(type(e).__name__, e))
             if self.__debug:
                 raise e
         finally:
-            self.health_check = {"last_execution": self.status}
+            self.health_check = {"last_execution": self.status, "status": state}
         self.app_lock.release()
-        time.sleep(1)
 
     @abstractmethod
-    def job(self):
+    def job(self) -> Status:
         """
         The runner calls this method.
         It must contain all the work of the application.

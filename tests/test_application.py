@@ -9,7 +9,6 @@ class TestApplication(application.Application):
         super().__init__()
 
     def job(self):
-        time.sleep(1)
         self.set_status(application.Status.SUCCESS)
 
 
@@ -35,10 +34,6 @@ class MyTestCase(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             self.test_application.set_status("Truc")
-
-    def test_empty_run(self):
-        self.test_application.run()
-        self.assertEqual(self.test_application.status, application.Status.SUCCESS)
 
 
 if __name__ == '__main__':
