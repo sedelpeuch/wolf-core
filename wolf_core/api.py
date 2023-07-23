@@ -48,14 +48,12 @@ def type_check(*type_args, **type_kwargs):
                                 or if any argument or keyword argument does not match its expected type.
             """
             args_list = list(args)
-            if len(type_args) > 1:
+            if isinstance(type_args[0], list):
                 type_args_list = type_args[0]
             else:
                 type_args_list = type_args
             if len(args_list) > len(type_args_list):
                 raise TypeError('Too many positional arguments')
-            if len(args_list) < len(type_args_list):
-                raise TypeError('Too few positional arguments')
 
             for i, (arg, type_arg) in enumerate(zip(args_list, type_args_list)):
                 if not isinstance(arg, type_arg):
@@ -115,11 +113,13 @@ class API(ABC):
         self.post = type("post", (), {})
         self.put = type("put", (), {})
         self.delete = type("delete", (), {})
+        self.patch = type("patch", (), {})
 
         self.ressources_schema = {
-            "verb": {"enum": ["GET", "POST", "PUT", "DELETE"]},
+            "verb": {"enum": ["GET", "POST", "PUT", "DELETE", "PATCH"]},
             "method": {"type": "function"},
-            "params": {"enum": [str, int, float, list, dict, bool, None]}
+            "params": {"enum": [str, int, float, list, dict, bool, None]},
+            "optional_params": {"enum": [str, int, float, list, dict, bool, None]}
         }
         self.ressources = ressources
         for ressource in self.ressources:
@@ -129,22 +129,99 @@ class API(ABC):
                 self.logger.error(f"Invalid ressource {ressource}: {e.message}")
         self.set_method()
 
+    def type_wrap(self, ressource) -> type:
+        """
+        Wrapper method for HTTP methods based on the verb associated with the given resource.
+
+        :param ressource: The resource for which the HTTP method is being wrapped.
+        :type ressource: dict
+        :return: The wrapped HTTP method.
+        :raises ValueError: If the verb associated with the resource is invalid.
+        """
+        http_methods = {
+            'GET': self.get,
+            'POST': self.post,
+            'PUT': self.put,
+            'PATCH': self.patch,
+            'DELETE': self.delete
+        }
+
+        verb = ressource["verb"]
+        type_wrap = http_methods.get(verb)
+
+        if type_wrap is None:
+            raise ValueError(f"Invalid verb: {verb}")
+        return type_wrap
+
     def set_method(self):
         """
-        Set the appropriate method for each resource in the API.
+        Process the resources and sub-resources.
 
         :return: None
         """
-        for resource in self.ressources:
+        for resource, resource_value in self.ressources.items():
+            if "verb" in resource_value.keys():
+                self.process_resource(resource, resource_value)
+            else:
+                self.process_sub_resource(resource, resource_value)
+
+    @staticmethod
+    def get_parameters(resource):
+        """
+        Get the parameters for the specified resource.
+
+        :param resource: A dictionary representing the resource for which the parameters need to be retrieved.
+        :return: A list of parameters for the specified resource.
+        """
+        return resource["params"] + [resource["optional_params"]] if "optional_params" in resource else resource[
+            "params"]
+
+    def process_resource(self, resource, resource_value):
+        """
+        Process a resource.
+
+        :param resource: The resource name.
+        :param resource_value: The value of the resource.
+        :return: None.
+        """
+        try:
+            method = resource_value["method"]
+        except KeyError:
+            raise ValueError(f"Invalid resource: {resource}")
+
+        type_wrap = self.type_wrap(resource_value)
+        parameters = self.get_parameters(resource_value)
+
+        setattr(type_wrap, resource, method)
+        setattr(type_wrap, resource,
+                type_check(parameters)(getattr(type_wrap, resource)))
+
+    def process_sub_resource(self, super_resource_name, super_resource):
+        """
+        This method processes the sub-resource by iterating over the items of the super_resource dictionary.
+        For each item, it retrieves the "method" value and performs error handling in case it is missing.
+
+        The method then calls the type_wrap method to wrap the resource value
+        and obtains the parameters using the get_parameters method.
+
+        Finally, it sets the super_resource_name attribute of the type_wrap object to the method value.
+        It also applies type checking using the type_check decorator to the method attribute.
+
+        :param super_resource_name: The name of the sub-resource being processed.
+        :param super_resource: A dictionary containing the super resource and its values.
+        :return: None
+        """
+        for resource, resource_value in super_resource.items():
             try:
-                method = self.ressources[resource]["method"]
+                method = resource_value["method"]
             except KeyError:
                 raise ValueError(f"Invalid resource: {resource}")
-            type_wrap = self.get if self.ressources[resource]["verb"] == "GET" else self.post if \
-                self.ressources[resource]["verb"] == "POST" else self.put if self.ressources[resource][
-                                                                                 "verb"] == "PUT" else self.delete
-            setattr(type_wrap, resource, method)
-            setattr(type_wrap, resource, type_check(self.ressources[resource]["params"])(getattr(type_wrap, resource)))
+
+            type_wrap = self.type_wrap(resource_value)
+            parameters = self.get_parameters(resource_value)
+
+            setattr(type_wrap, super_resource_name, method)
+            setattr(type_wrap, super_resource_name, type_check(parameters)(getattr(type_wrap, super_resource_name)))
 
 
 class RequestResponse:
