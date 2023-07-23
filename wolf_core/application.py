@@ -181,6 +181,7 @@ class Application(ABC):
             state = self.job()
         except Exception as e:
             self.health_check = {"status": Status.ERROR, "message": str(e)}
+            state = Status.ERROR
             self.logger.error("An error occurred while running the application: {} - {}".format(type(e).__name__, e))
             if self.__debug:
                 raise e
