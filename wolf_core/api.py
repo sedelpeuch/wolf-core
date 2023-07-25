@@ -173,8 +173,20 @@ class API(ABC):
         :param resource: A dictionary representing the resource for which the parameters need to be retrieved.
         :return: A list of parameters for the specified resource.
         """
-        return resource["params"] + [resource["optional_params"]] if "optional_params" in resource else resource[
-            "params"]
+        params = resource["params"]
+        optional_params = resource["optional_params"] if "optional_params" in resource else None
+        contact = []
+        if params is not None:
+            if isinstance(params, list):
+                contact += params
+            else:
+                contact.append(params)
+        if optional_params is not None:
+            if isinstance(optional_params, list):
+                contact += optional_params
+            else:
+                contact.append(optional_params)
+        return contact
 
     def process_resource(self, resource, resource_value):
         """
