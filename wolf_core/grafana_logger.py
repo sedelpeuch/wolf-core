@@ -57,7 +57,7 @@ class GrafanaLogger:
         self.__logger = logger
         self.__database_schema = ("id INT AUTO_INCREMENT PRIMARY KEY, time TIMESTAMP, job VARCHAR(255), "
                                   "status INT, message VARCHAR(255)")
-        self.__create_use_db()
+        self.working = self.__create_use_db()
         self.post_lock = threading.Lock()
 
     def __create_use_db(self):
@@ -68,23 +68,31 @@ class GrafanaLogger:
 
         :return: None
         """
-        self.__db = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            passwd="root",
-        )
+        try:
+            self.__db = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                passwd="root",
+            )
+        except mysql.connector.Error as e:
+            self.__logger.error("Could not connect to database: " + str(e))
+            return False
         self.__cursor = self.__db.cursor()
         try:  # Add if not exist
             self.__logger.warning("Creating database " + self.__dbName)
             self.__cursor.execute("CREATE DATABASE " + self.__dbName)
         except Exception as e:
             self.__logger.info("Could not create database: " + str(e))
-        self.__db = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            passwd="root",
-            database=self.__dbName
-        )
+        try:
+            self.__db = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                passwd="root",
+                database=self.__dbName
+            )
+        except mysql.connector.Error as e:
+            self.__logger.error("Could not connect to database: " + str(e))
+            return False
         self.__cursor = self.__db.cursor()
         try:  # Drop if exist
             self.__logger.warning("Dropping table " + self.__tableName)
@@ -93,6 +101,7 @@ class GrafanaLogger:
             self.__logger.info("Could not drop table: " + str(e))
         self.__cursor.execute(
             "CREATE TABLE " + self.__tableName + " (" + self.__database_schema + ")")
+        return True
 
     def post(self, job, status, message):
         """
@@ -103,9 +112,10 @@ class GrafanaLogger:
         :param message: The message of the job.
         :return: None
         """
-        sql = "INSERT INTO " + self.__tableName + " (time, job, status, message) VALUES (%s, %s, %s, %s)"
-        val = (datetime.datetime.now(), job, status, message)
-        self.post_lock.acquire()
-        self.__cursor.execute(sql, val)
-        self.__db.commit()
-        self.post_lock.release()
+        if self.working:
+            sql = "INSERT INTO " + self.__tableName + " (time, job, status, message) VALUES (%s, %s, %s, %s)"
+            val = (datetime.datetime.now(), job, status, message)
+            self.post_lock.acquire()
+            self.__cursor.execute(sql, val)
+            self.__db.commit()
+            self.post_lock.release()
