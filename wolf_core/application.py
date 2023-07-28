@@ -5,20 +5,21 @@ All applications must implement this interface if they want to be run by the run
 """
 import logging
 import threading
-import time
+import uuid
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import List
-import uuid
 
 import schedule
 
 from wolf_core import api
 
+
 class Status(Enum):
     """
     This class is an enum for the status of an application.
     """
+
     NEVER = 0
     RUNNING = 1
     WAITING = 2
@@ -61,13 +62,7 @@ class Application(ABC):
         self.frequency: schedule.Job = schedule.every().day
         self.logger = logging.getLogger(__name__)
 
-
-        self.__health_check = {
-            "status": Status.WAITING,
-            "message": " ",
-            "last_execution": Status.NEVER,
-            "id": -1
-        }
+        self.__health_check = {"status": Status.WAITING, "message": " ", "last_execution": Status.NEVER, "id": -1, }
 
         self.app_lock = threading.Lock()
         self.__debug = False
@@ -95,7 +90,7 @@ class Application(ABC):
             raise TypeError("The health check must be a dict.")
         try:
             self.__health_check["status"] = value["status"]
-        except Exception as e:
+        except KeyError:
             pass
         try:
             self.__health_check["message"] = value["message"]
@@ -175,7 +170,7 @@ class Application(ABC):
         :return: None
         """
         self.app_lock.acquire()
-        self.health_check = {"status": Status.RUNNING, "id": uuid.uuid4().int, "message": " "}
+        self.health_check = {"status": Status.RUNNING, "id": uuid.uuid4().int, "message": " ", }
         state = Status.RUNNING
         try:
             state = self.job()

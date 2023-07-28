@@ -9,15 +9,16 @@ from abc import ABC
 import jsonschema
 
 
-def type_check(*type_args, **type_kwargs):
-    """Decorator that checks the types of the arguments passed to a function.
+def type_check(*type_args, **type_kwargs) -> callable:
+    """
+    Decorator that checks the types of the arguments passed to a function.
 
-    :param type_args: Positional arguments representing the types of the function arguments.
+    :param type_args: Positional arguments represent the types of the function arguments.
     :param type_kwargs: Keyword arguments representing the types of the function keyword arguments.
     :return: Decorator function that performs the type checking.
     """
 
-    def decorator(func):
+    def decorator(func) -> callable:
         """
         This decorator ensures that the arguments passed to the decorated function match the specified types.
 
@@ -35,7 +36,7 @@ def type_check(*type_args, **type_kwargs):
         :return: The decorated function.
         """
 
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs) -> callable:
             """
             Wrap the given function with type checking for positional arguments and keyword arguments.
 
@@ -57,7 +58,7 @@ def type_check(*type_args, **type_kwargs):
 
             for i, (arg, type_arg) in enumerate(zip(args_list, type_args_list)):
                 if not isinstance(arg, type_arg):
-                    raise TypeError(f'Argument {i + 1} must be {type_arg}')
+                    raise TypeError('Argument {} must be {}'.format(i, type_arg))
 
             for key, type_value in type_kwargs.items():
                 try:
@@ -86,7 +87,8 @@ class API(ABC):
     :type token: str
     :param test: Optional flag to indicate whether to use the test url or the main url. Defaults to False.
     :type test: bool, optional
-    :param ressources: The dictionary of resources and their corresponding methods and parameters. ressources must follow the following schema:
+    :param ressources: The dictionary of resources and their corresponding methods and parameters.Ressources must
+    follow the following schema:
         {
             "ressource_name": {
                 "verb": "GET" | "POST" | "PUT" | "DELETE",

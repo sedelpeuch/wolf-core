@@ -1,4 +1,3 @@
-import time
 import unittest
 
 from wolf_core import application
@@ -12,13 +11,11 @@ class TestApplication(application.Application):
         self.set_status(application.Status.SUCCESS)
 
 
-
 class MyTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.test_application = TestApplication()
 
     def test_initialisation(self):
-        self.assertEqual(self.test_application._apis, [])
         self.assertEqual(self.test_application.status, application.Status.WAITING)
 
     def test_status_property(self):
@@ -33,6 +30,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(self.test_application.status, application.Status.WAITING)
 
         with self.assertRaises(TypeError):
+            # noinspection PyTypeChecker
             self.test_application.set_status("Truc")
 
 

@@ -13,6 +13,7 @@ class TestApplication(application.Application):
         self.set_status(application.Status.SUCCESS)
         time.sleep(0.5)
 
+
 class EmptyApplication(application.Application):
     def __init__(self):
         super().__init__()
@@ -49,7 +50,8 @@ class TestRunner(unittest.TestCase):
     def test_get_status(self):
         self.test_runner._Runner__load_applications()
         self.test_runner._Runner__get_status(self.test_runner._applications[0])
-        self.assertNotEqual(self.test_runner._Runner__app_health["TestApplication"]["status"], {application.Status.WAITING})
+        self.assertNotEqual(self.test_runner._Runner__app_health["TestApplication"]["status"],
+                            {application.Status.WAITING})
 
     def test_run(self):
         self.test_runner.run()

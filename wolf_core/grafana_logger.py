@@ -1,11 +1,54 @@
 #! /usr/bin/env python3
+"""
+The GrafanaLogger class of the provided Python code creates a connection to a MySQL database
+and enables the logging of messages into a specific table.
+It primarily comprises three methods:
+
+__init__(self, logger=None): Constructor method for the class.
+It initializes several instance variables, including the database name,
+table name, prepares the database schema, and a logger object for event logging.
+It also calls the private method __create_use_db
+which connects to a database and establishes a table for logging operations.
+
+__create_use_db(self):
+This private method creates the database connection
+and attempts to create the specified table if it doesn't already exist.
+If the table exists, the method attempts to drop it before creating a new one.
+It prepares the cursor for executing subsequent queries.
+
+post (self, job, status, message): This method registers a log message to the table defined earlier.
+It formulates the SQL query to insert a new row into the table,
+utilizing user-provided values for fields (job, status, and message) and the current timestamp.
+"""
 import datetime
 import threading
 
 import mysql.connector
 
 
-class GrafanaLogger():
+class GrafanaLogger:
+    """
+    The GrafanaLogger class allows posting log messages to a MySQL database.
+
+    Attributes:
+        __dbName (str): The name of the database.
+        __tableName (str): The name of the table.
+        __db (mysql.connector.MySQLConnection): The database connection.
+        __logger: The logger object for logging events.
+        __database_schema (str): The schema for creating the table.
+        post_lock (threading.Lock): The lock used for thread safety.
+
+    Methods:
+        __init__(self, logger=None):
+            Initializes the GrafanaLogger instance.
+
+        __create_use_db(self):
+            Tries to create the database with the name specified in __dbName.
+            If the database already exists, it uses it and sets the cursor.
+
+        post (self, job, status, message):
+             Post a log message to the database.
+    """
 
     def __init__(self, logger=None):
         self.__dbName = "wolf"
