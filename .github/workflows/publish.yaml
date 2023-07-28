@@ -29,9 +29,8 @@ jobs:
           source venv/bin/activate
           python -m build --sdist --wheel .
 
-      - name: Publish to Test PyPi
-        uses: pypa/gh-action-pypi-publish@v1.4.2
+      - name: Publish distribution 📦 to Test PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          user: __token__
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          repositories: "https://test.pypi.org/legacy/"
+          repository-url: https://test.pypi.org/legacy/
