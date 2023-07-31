@@ -51,19 +51,21 @@ class Runner:
         self.logger.handlers = []
         log_name = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         file_path = os.path.dirname(os.path.realpath(__file__))
-        os.makedirs(os.path.join(file_path, 'log'), exist_ok=True)
-        try:
-            file_handler = logging.FileHandler(file_path + "/log" + '/wolf_core_' + log_name + '.log')
-        except PermissionError:
-            raise PermissionError("Could not create log file. Please check permissions.")
-        file_handler.setLevel(logging.DEBUG)
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-        file_handler.setFormatter(formatter)
         console_handler.setFormatter(formatter)
-        self.logger.addHandler(file_handler)
         self.logger.addHandler(console_handler)
+
+        try:
+            os.makedirs(os.path.join(file_path, 'log'), exist_ok=True)
+            file_handler = logging.FileHandler(file_path + "/log" + '/wolf_core_' + log_name + '.log')
+            file_handler.setLevel(logging.DEBUG)
+            file_handler.setFormatter(formatter)
+            self.logger.addHandler(file_handler)
+        except PermissionError:
+            self.logger.error("Could not create log file. Please check permissions.")
+
         time.sleep(1)
 
     def __load_applications(self):
