@@ -50,7 +50,8 @@ class Runner:
         """
         self.logger.handlers = []
         log_name = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        file_path = os.path.dirname(os.path.realpath(__file__))
+
+        file_path = os.path.expanduser("~/.cache/wolf")
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
