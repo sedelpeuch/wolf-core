@@ -7,7 +7,7 @@ La classe ``Runner`` est divisée en plusieurs parties :
 
 1. Initialisation de la classe (``__init__``) : Initialise le Runner avec des attributs pour stocker les API et les applications, les indicateurs de débogage et de test, la configuration du logger, les événements de thread et le verrou pour le threading.
 
-2. Configuration du logger (``__setup_logger``) : Cette méthode configure le logger pour le Runner, y compris un gestionnaire de fichiers et un gestionnaire de flux (console) en utilisant le module ``logging``.
+2. Configuration du logger (``__setup_logger``) : Cette méthode configure le logger pour le Runner, y compris un gestionnaire de fichiers et un gestionnaire de flux (console) en utilisant le module ``logging``. Les logs sont enregistrés dans le dossier `/home/user/.cache/wolf/log` et sont nommés en fonction de la date et de l'heure de leur création. Les logs sont enregistrés dans le fichier et affichés dans la console.
 
 3. Chargement des applications (``__load_applications``) : Cette méthode est chargée de charger les instances de chaque application à partir des sous-classes de ``application.Application``. Seules les sous-classes qui ne surchargent pas la méthode ``run`` mais qui surchargent la méthode ``job`` sont prises en compte. Leurs instances sont stockées et leur logger est configuré.
 
