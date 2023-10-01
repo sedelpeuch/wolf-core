@@ -87,4 +87,4 @@ mysql-connector-python = "8.1.0"
 
 
 [packages]
-wolf_core = { path = "wolf_core", develop = true }
+wolf_core = { path = "wolf_core", develop = false }
