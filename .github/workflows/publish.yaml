@@ -3,6 +3,8 @@ name: Publish to Test PyPI
 on:
   release:
     types: [ created ]
+  workflow_dispatch:
+
 
 jobs:
   build-and-publish:
