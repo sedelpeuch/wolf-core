@@ -2,8 +2,6 @@
 
 Wolf-Core Status
 
-[![Documentation Status](https://readthedocs.org/projects/wolf-project/badge/?version=latest)](https://wolf-project.readthedocs.io/?badge=latest) [![Wolf Core](https://github.com/Eirlab/wolf-core/actions/workflows/unittest.yml/badge.svg)](https://github.com/Eirlab/wolf-core/actions/workflows/unittest.yml) [![Publish to Test PyPI](https://github.com/Eirlab/wolf-core/actions/workflows/publish.yaml/badge.svg)](https://github.com/Eirlab/wolf-core/actions/workflows/publish.yaml)
-
 Le projet Wolf est un projet ayant pour but de créer un environnement d'interconnexion entre les différents outils pouvant être utilisés dans la gestion d'associations, de projets
 etc
 
@@ -36,8 +34,6 @@ poetry install
 La documentation complète du projet est disponible dans le répertoire /docs. Vous pouvez consulter cette documentation
 pour en savoir plus sur les
 fonctionnalités du projet et son utilisation.
-
-La documentation est disponibe en ligne à l'adresse suivante : https://wolf-project.readthedocs.io/
 
 ## Contributions
 
